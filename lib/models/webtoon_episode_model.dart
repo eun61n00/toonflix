@@ -5,5 +5,5 @@ class WebtoonEpisodeModel {
       : id = json['id'],
         title = json['title'],
         rating = json['rating'],
-        data = json['data'];
+        data = json['date'];
 }
