@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:toonflix/models/webtoon_detail_model.dart';
 import 'package:toonflix/models/webtoon_episode_model.dart';
 import 'package:toonflix/services/api_service.dart';
@@ -24,12 +25,43 @@ class DetailScreen extends StatefulWidget {
 class _DetailScreenState extends State<DetailScreen> {
   late Future<WebtoonDetailModel> detail;
   late Future<List<WebtoonEpisodeModel>> episodes;
+  late SharedPreferences pref;
+  bool isLiked = false;
+
+  Future initPreferences() async {
+    pref = await SharedPreferences.getInstance();
+    final likedToons = pref.getStringList('likedToons');
+    if (likedToons != null) {
+      if (likedToons.contains(widget.id)) {
+        isLiked = true;
+        setState(() {});
+      }
+    } else {
+      pref.setStringList('likedToons', []);
+    }
+  }
+
+  onLikeTap() async {
+    final likedToons = pref.getStringList('likedToons');
+    if (likedToons != null) {
+      if (isLiked) {
+        likedToons.remove(widget.id);
+      } else {
+        likedToons.add(widget.id);
+      }
+      await pref.setStringList('likedToons', likedToons);
+      setState(() {
+        isLiked = !isLiked;
+      });
+    }
+  }
 
   @override
   void initState() {
     super.initState();
     detail = ApiService.getWebtoonById(widget.id);
     episodes = ApiService.getLatestEpisodesById(widget.id);
+    initPreferences();
   }
 
   @override
@@ -47,6 +79,15 @@ class _DetailScreenState extends State<DetailScreen> {
           backgroundColor: Colors.white,
           foregroundColor: Colors.green.shade800,
           elevation: 3,
+          actions: [
+            IconButton(
+              onPressed: onLikeTap,
+              icon: isLiked
+                  ? const Icon(Icons.favorite_rounded, color: Colors.red)
+                  : const Icon(Icons.favorite_outline_rounded,
+                      color: Colors.red),
+            )
+          ],
         ),
         backgroundColor: Colors.white,
         body: SingleChildScrollView(
